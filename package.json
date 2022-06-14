@@ -1,0 +1,9 @@
+{
+  "name": "eclipse-tahu",
+  "packageManager": "yarn@3.2.0",
+  "workspaces": [
+    "javascript/core/sparkplug-client",
+    "javascript/core/sparkplug-payload",
+    "javascript/examples/simple"
+  ]
+}

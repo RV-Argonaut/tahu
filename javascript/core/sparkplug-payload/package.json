@@ -1,12 +1,12 @@
 {
-  "name": "sparkplug-payload",
-  "version": "1.0.1",
+  "name": "@redviking/sparkplug-payload",
+  "version": "1.0.2",
   "description": "A library for encoding and decoding Sparkplug payloads",
   "main": "index.js",
   "scripts": {
-    "build": "npm run build:proto && npm run build:ts",
+    "build": "yarn build:proto && yarn build:ts",
     "build:ts": "tsc",
-    "build:proto": "pbjs -t static-module -w commonjs -o lib/sparkplugPayloadProto.js ../../../sparkplug_b/sparkplug_b.proto && pbts -o lib/sparkplugPayloadProto.d.ts lib/sparkplugPayloadProto.js"
+    "build:proto": "yarn dlx -p protobufjs@^6.8.0 pbjs -t static-module -w commonjs -o lib/sparkplugPayloadProto.js ../../../sparkplug_b/sparkplug_b.proto && yarn dlx -p protobufjs@^6.8.0 pbts -o lib/sparkplugPayloadProto.d.ts lib/sparkplugPayloadProto.js"
   },
   "repository": {
     "type": "git",
@@ -40,5 +40,8 @@
   "devDependencies": {
     "@types/node": "^16.11.29",
     "typescript": "^4.6.3"
+  },
+  "publishConfig": {
+    "@redviking:registry": "https://gitlab.com/api/v4/projects/36991961/packages/npm/"
   }
 }

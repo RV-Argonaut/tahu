@@ -1,0 +1,74 @@
+include:
+  - project: redviking/templates/ci-templates
+    ref: master
+    file: modular.gitlab-ci.yaml
+  - project: redviking/templates/ci-templates
+    ref: yarn-cache
+    file: modular/yarn-cache.gitlab-ci.yaml
+
+default:
+  image: node:16-alpine
+  tags:
+    - civ3
+
+stages:
+  - build
+  - deploy
+  - cleanup
+
+build:
+  stage: build
+  before_script:
+    - eval "$CI_UTIL_INIT"
+    - eval "$MODULAR_YARN_CACHE"
+    - yarn --immutable
+  script:
+    - yarn workspace @redviking/sparkplug-payload build
+    - yarn workspace @redviking/sparkplug-client build
+  artifacts:
+    paths:
+      - javascript/core/sparkplug-client
+      - javascript/core/sparkplug-payload
+    expire_in: 30 days
+
+deploy:
+  stage: deploy
+  when: manual
+  before_script:
+    - eval "$CI_UTIL_INIT"
+  script:
+    - cd javascript/core/sparkplug-payload
+    - export PAYLOAD_VERSION="$(node -p "require('./package.json').version")-$CI_COMMIT_SHORT_SHA"
+    - npm version "$PAYLOAD_VERSION" --no-git-tag-version
+    - npm publish
+    - echo "published @redviking/sparkplug-payload@$PAYLOAD_VERSION"
+
+    - cd ../sparkplug-client
+    - yarn add "sparkplug-payload@npm:@redviking/sparkplug-payload@$PAYLOAD_VERSION"
+    - export CLIENT_VERSION="$(node -p "require('./package.json').version")-$CI_COMMIT_SHORT_SHA"
+    - npm version "$CLIENT_VERSION" --no-git-tag-version
+    - npm publish
+    - touch /tmp/job-success
+  after_script:
+    - |
+      if ! [ -f /tmp/job-success ]
+      then
+        if [ "$PAYLOAD_VERSION" ]
+        then
+          npm unpublish @redviking/sparkplug-payload@$PAYLOAD_VERSION
+          echo "Unpublished @redviking/sparkplug-payload@$PAYLOAD_VERSION"
+        fi
+
+        if [ "$CLIENT_VERSION" ]
+        then
+          npm unpublish @redviking/sparkplug-client@$CLIENT_VERSION
+          echo "Unpublished @redviking/sparkplug-client@$CLIENT_VERSION"
+        fi
+      fi
+
+slack-notify-pass:
+  extends: .modular-slack-pass
+  stage: cleanup
+slack-notify-fail:
+  extends: .modular-slack-fail
+  stage: cleanup
